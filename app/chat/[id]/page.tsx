@@ -1,21 +1,16 @@
-// app/domain/[id]/page.tsx
+// app/chat/[id]/page.tsx
 'use client'
 
-import React, {useState, useRef} from 'react'
-import {useParams} from 'next/navigation'
-import {LpNavbar5} from '@/components/pro-blocks/landing-page/lp-navbars/lp-navbar-5'
-import {Input} from '@/components/ui/input'
-import {ScrollArea, ScrollBar} from '@/components/ui/scroll-area'
-import {Search, ArrowLeft, ArrowRight} from 'lucide-react'
-import {Button} from '@/components/ui/button'
-import {ExpertCard, type Expert as BaseExpert} from '@/components/expert-card'
+import React, { useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { LpNavbar5 } from '@/components/pro-blocks/landing-page/lp-navbars/lp-navbar-5'
+import { ChatBlock, ChatMessage } from '@/components/chat'
+import { ExpertDetailCard } from '@/components/expert-details-card'
+import { ExpertCard, type Expert } from '@/components/expert-card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
-interface Expert extends Omit<BaseExpert, 'expertise'> {
-  expertise: string[]
-}
-
-// données globales
-export const ALL_EXPERTS: Expert[] = [
+const ALL_EXPERTS: Expert[] = [
   // --- IA Rockstars ---
   { id: 'alice-martin', name: 'Dr. Alice Martin', title: 'AI Research Lead', expertise: ['artificial-intelligence'], avatarUrl: 'https://i.pravatar.cc/150?u=alice-martin', featured: true, href: '/chat/alice-martin' },
   { id: 'leo-chen', name: 'Prof. Leo Chen', title: 'Deep Learning Pioneer', expertise: ['artificial-intelligence'], avatarUrl: 'https://i.pravatar.cc/150?u=leo-chen', featured: true, href: '/chat/leo-chen' },
@@ -49,105 +44,65 @@ export const ALL_EXPERTS: Expert[] = [
   // ... autres experts si besoin ...
 ]
 
-// filtres
-export const FEATURED_EXPERTS = ALL_EXPERTS.filter(e => e.featured)
-export const OTHER_EXPERTS    = ALL_EXPERTS.filter(e => !e.featured)
+export default function ChatPage() {
+  const { id } = useParams()
+  const router = useRouter()
+  const expert = ALL_EXPERTS.find((e) => e.id === id)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
 
-export default function DomainExpertsPage() {
-  const {id: domainIdRaw} = useParams()
-  const domainId = String(domainIdRaw)
-  const [search, setSearch] = useState('')
-  const viewportRef = useRef<HTMLDivElement>(null)
-  const CARD_WIDTH = 288 + 24 // 288px (w-72) + 24px (gap-6)
-
-  const scrollPrev = () => {
-    viewportRef.current?.scrollBy({left: -CARD_WIDTH, behavior: 'smooth'})
+  function handleSend(content: string) {
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content },
+      {
+        role: 'assistant',
+        content: "Thanks for your question! I'll respond shortly.",
+        loading: false,
+      },
+    ])
   }
-  const scrollNext = () => {
-    viewportRef.current?.scrollBy({left: CARD_WIDTH, behavior: 'smooth'})
+
+  if (!expert) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <LpNavbar5 />
+        <main className="container mx-auto flex-1 flex flex-col py-10 items-center justify-center">
+          <p className="text-lg text-muted-foreground">Expert not found.</p>
+        </main>
+      </div>
+    )
   }
-
-  // Filtrer les experts du domaine sélectionné
-  const domainExperts = ALL_EXPERTS.filter(e => e.expertise.includes(domainId))
-
-  const filtered = domainExperts.filter(
-    e =>
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.title.toLowerCase().includes(search.toLowerCase())
-  )
-  const featured = filtered.filter(e => e.featured)
-  const others   = filtered.filter(e => !e.featured)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <LpNavbar5 />
-
-      <main className="container mx-auto px-6 py-10 space-y-10">
-        {/* entête avec titre + bouton de retour */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">
-            Explore {domainId?.toString().replace(/-/g, ' ')}
-          </h1>
-          <Button
-            asChild
-            variant="secondary"
-            className="text-sm"
-          >
-            <a href="/explorer">Return to explorer</a>
-          </Button>
+      <main className="container mx-auto flex-1 flex flex-row gap-8 py-10">
+        {/* Chat column (2/3) */}
+        <div className="w-2/3 flex flex-col min-h-0">
+          <h1 className="text-2xl font-bold mb-4">Chat with {expert.name}</h1>
+          <ChatBlock messages={messages} onSend={handleSend} />
         </div>
-
-        {/* Barre de recherche */}
-        <div className="max-w-md mx-auto relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <Input
-            placeholder="Search for experts"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-10"
+        {/* Expert detail column (1/3) */}
+        <div className="w-1/3 flex-shrink-0 flex flex-col gap-4">
+          <div className="flex flex-row justify-end">
+            <Button
+              variant="secondary"
+              className="mb-2"
+              aria-label="Back to Experts"
+              onClick={() => router.push('/explorer')}
+            >
+              ← Back to Experts
+            </Button>
+          </div>
+          <ExpertDetailCard
+            avatarUrl={expert.avatarUrl}
+            name={expert.name}
+            title={expert.title}
+            bio="Dr. Harper is a renowned psychologist with over 15 years of experience. She specializes in cognitive behavioral therapy and has helped many overcome various challenges."
+            onSeeSources={() => {}}
+            onStory={() => {}}
           />
         </div>
-
-        {/* Featured Experts */}
-        {featured.length > 0 && (
-          <section className="relative space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-semibold">Rockstars</h2>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="icon" onClick={scrollPrev}>
-                  <ArrowLeft />
-                  <span className="sr-only">Précédent</span>
-                </Button>
-                <Button variant="outline" size="icon" onClick={scrollNext}>
-                  <ArrowRight />
-                  <span className="sr-only">Suivant</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* ScrollArea horizontal */}
-            <ScrollArea viewportRef={viewportRef} className="rounded-lg">
-              <div className="flex w-max gap-6 p-4">
-                {featured.map(e => (
-                  <div key={e.id} className="shrink-0 w-72">
-                    <ExpertCard expert={e} />
-                  </div>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </section>
-        )}
-
-        {/* All Experts */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">All Experts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {others.map(e => (
-              <ExpertCard key={e.id} expert={e} />
-            ))}
-          </div>
-        </section>
       </main>
     </div>
   )

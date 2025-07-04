@@ -9,7 +9,7 @@ export type Expert = {
   id: string
   name: string
   title: string
-  expertise: string
+  expertise: string[]
   avatarUrl?: string
   featured?: boolean
   href: string
@@ -32,7 +32,7 @@ export function ExpertCard({ expert }: { expert: Expert }) {
           <h3 className="text-lg font-semibold">{expert.name}</h3>
         </Link>
         <p className="text-sm text-muted-foreground">{expert.title}</p>
-        <p className="text-xs text-muted-foreground mt-1">{expert.expertise}</p>
+        <p className="text-xs text-muted-foreground mt-1">{expert.expertise.join(', ')}</p>
       </CardContent>
     </Card>
   )
