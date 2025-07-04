@@ -175,9 +175,16 @@ export function LpNavbar5({
           <Link href="/">
             <Logo />
           </Link>
-          <Link href="/expert" className="hidden md:inline-block ml-4">
-            <Button variant="secondary">Become an expert</Button>
-          </Link>
+          <div className="hidden md:flex items-center gap-2 ml-4">
+            <Link href="/expert">
+              <Button variant="secondary">Become an expert</Button>
+            </Link>
+            {isLoggedIn && (
+              <Link href="/explorer">
+                <Button variant="default">Explorer</Button>
+              </Link>
+            )}
+          </div>
           <Button
             variant="ghost"
             className="flex size-9 items-center justify-center md:hidden"
